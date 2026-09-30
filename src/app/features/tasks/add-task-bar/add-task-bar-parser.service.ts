@@ -4,6 +4,7 @@ import { Tag } from '../../tag/tag.model';
 import { AddTaskBarStateService } from './add-task-bar-state.service';
 import { AddTaskBarRepeat } from './add-task-bar.const';
 import {
+  SHORT_SYNTAX_CLOCK_RANGE_REG_EX,
   SHORT_SYNTAX_REPEAT_REMOVAL_REG_EX,
   SHORT_SYNTAX_TIME_REG_EX,
   shortSyntax,
@@ -509,6 +510,21 @@ export class AddTaskBarParserService {
       return null;
     }
     const ranges = this._lastParsedRanges.ranges.filter((r) => r.type === type);
+    if (type === 'estimate') {
+      for (const range of this._lastParsedRanges.ranges) {
+        if (range.type !== 'due') continue;
+        const clockRange = text
+          .slice(range.start, range.end)
+          .match(SHORT_SYNTAX_CLOCK_RANGE_REG_EX);
+        if (clockRange) {
+          ranges.push({
+            type: 'estimate',
+            start: range.start + clockRange[1].length,
+            end: range.end,
+          });
+        }
+      }
+    }
     if (!ranges.length) {
       return text;
     }

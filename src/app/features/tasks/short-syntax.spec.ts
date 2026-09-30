@@ -304,6 +304,67 @@ describe('shortSyntax', () => {
     });
   });
 
+  describe('clock ranges', () => {
+    const now = new Date(2026, 0, 15, 10);
+
+    for (const [syntax, hour, minute, duration] of [
+      ['@12-14', 12, 0, 120],
+      ['@12:10-14:30', 12, 10, 140],
+      ['@9-10:30', 9, 0, 90],
+      ['@09:15 - 11', 9, 15, 105],
+      ['@23:30-01:15', 23, 30, 105],
+      ['@22-24:00', 22, 0, 120],
+    ] as const) {
+      it(`schedules ${syntax} with its duration and highlights the full token`, async () => {
+        const title = `Work ${syntax} later`;
+        const result = await shortSyntax({ ...TASK, title }, CONFIG, [], [], now);
+        const expected = new Date(2026, 0, hour < 10 ? 16 : 15, hour, minute);
+        expect(result?.taskChanges).toEqual({
+          title: 'Work  later',
+          dueWithTime: expected.getTime(),
+          dueDay: null,
+          timeEstimate: duration * 60 * 1000,
+        });
+        expect(result?.parsedRanges).toEqual(expectedRanges(title, [['due', syntax]]));
+      });
+    }
+
+    it('matches a start plus an explicit estimate', async () => {
+      const parse = (title: string): ReturnType<typeof shortSyntax> =>
+        shortSyntax({ ...TASK, title }, CONFIG, [], [], now);
+      expect((await parse('Work @12-14'))?.taskChanges).toEqual(
+        (await parse('Work @12 t2h'))?.taskChanges,
+      );
+    });
+
+    for (const title of ['Work @12-14 t3h', 'Work t3h @12-14']) {
+      it(`prefers the explicit estimate in ${title}`, async () => {
+        const result = await shortSyntax({ ...TASK, title }, CONFIG, [], [], now);
+        expect(result?.taskChanges.timeEstimate).toBe(3 * 60 * 60 * 1000);
+      });
+    }
+
+    for (const syntax of ['@25-26', '@12:60-14:30', '@12-24:01', '@12-12']) {
+      it(`leaves invalid range ${syntax} unchanged`, async () => {
+        expect(
+          await shortSyntax({ ...TASK, title: `Work ${syntax}` }, CONFIG, [], [], now),
+        ).toBeUndefined();
+      });
+    }
+
+    it('respects disabled due syntax', async () => {
+      expect(
+        await shortSyntax(
+          { ...TASK, title: 'Work @12-14' },
+          { ...CONFIG, isEnableDue: false },
+          [],
+          [],
+          now,
+        ),
+      ).toBeUndefined();
+    });
+  });
+
   describe('should recognize short syntax for date', () => {
     it('should correctly parse schedule syntax with time only', async () => {
       const t = {

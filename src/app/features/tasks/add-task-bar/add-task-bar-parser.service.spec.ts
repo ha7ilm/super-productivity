@@ -111,6 +111,47 @@ describe('AddTaskBarParserService', () => {
       mockStateService.updateDeadlineRemindOption.calls.reset();
     });
 
+    it('applies a clock range and lets an estimate pick preserve its start', async () => {
+      const input = 'Work @12:10-14:30';
+      await service.parseAndUpdateText(
+        input,
+        mockConfig,
+        mockProjects,
+        mockTags,
+        mockDefaultProject,
+      );
+      expect(mockStateService.updateEstimate).toHaveBeenCalledWith(140 * 60 * 1000);
+      expect(mockStateService.updateCleanText).toHaveBeenCalledWith('Work');
+      expect(service.removeShortSyntaxFromInput(input, 'date')).toBe('Work');
+      mockStateService.inputTxt.and.returnValue(input);
+      service.applyUserEstimatePick(3 * 60 * 60 * 1000);
+      expect(mockStateService.updateEstimate).toHaveBeenCalledWith(
+        3 * 60 * 60 * 1000,
+        'Work @12:10',
+      );
+      mockStateService.updateEstimate.calls.reset();
+      await service.parseAndUpdateText(
+        'Work @12:10',
+        mockConfig,
+        mockProjects,
+        mockTags,
+        mockDefaultProject,
+      );
+      expect(mockStateService.updateEstimate).not.toHaveBeenCalled();
+    });
+
+    it('removes both an explicit estimate and the range end when clearing estimate syntax', async () => {
+      const input = 'Work t3h @12-14';
+      await service.parseAndUpdateText(
+        input,
+        mockConfig,
+        mockProjects,
+        mockTags,
+        mockDefaultProject,
+      );
+      expect(service.removeShortSyntaxFromInput(input, 'estimate')).toBe('Work @12');
+    });
+
     it('should handle empty text', async () => {
       await service.parseAndUpdateText('', null, [], [], null as any);
       expect(mockStateService.updateCleanText).not.toHaveBeenCalled();

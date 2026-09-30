@@ -55,6 +55,10 @@ export type ShortSyntaxRepeat =
   | { type: 'INTERVAL'; repeatCycle: RepeatCycleOption; repeatEvery: number };
 
 const CH_TSP = '/';
+// A clock range directly after @, in 24-hour notation. Keep the start token
+// separate so changing the estimate in the add bar can retain the start time.
+export const SHORT_SYNTAX_CLOCK_RANGE_REG_EX =
+  /^(@(\d{1,2})(?::(\d{2}))?)\s*-\s*(\d{1,2})(?::(\d{2}))?(?=\s|$)/;
 // Due how this expression capture clusters of duration units, be mindful of
 // match boundary whitespace during processing
 export const SHORT_SYNTAX_TIME_REG_EX = new RegExp(
@@ -443,6 +447,10 @@ export const shortSyntax = async (
     if (dueResult) {
       repeat = dueResult.repeat || null;
       taskChanges = { ...taskChanges, ...dueResult.changes };
+      // An explicitly typed estimate takes precedence over a clock range.
+      if (timeResult?.changes.timeEstimate !== undefined) {
+        taskChanges.timeEstimate = timeResult.changes.timeEstimate;
+      }
       pushRanges('due', dueResult.ranges);
       isTitleChanged = true;
     }
@@ -802,11 +810,6 @@ const parseShortSyntaxDate = async (
       }
     }
 
-    const dateParser = await loadCustomDateParser();
-    const parsedDateArr = dateParser.parse(rr[0], now, {
-      forwardDate: true,
-    });
-
     // Strip out the short syntax for scheduled date and given date
     const consume = (textToReplace: string): TextRange[] => {
       const removeStart = tracked.text.indexOf(textToReplace, triggerIndex);
@@ -818,6 +821,53 @@ const parseShortSyntaxDate = async (
       tracked.trim();
       return ranges;
     };
+
+    const clockRange = !isDeadline && rr[0].match(SHORT_SYNTAX_CLOCK_RANGE_REG_EX);
+    if (clockRange) {
+      const [, , startHourText, startMinuteText, endHourText, endMinuteText] = clockRange;
+      const startHour = Number(startHourText);
+      const startMinute = Number(startMinuteText ?? 0);
+      const endHour = Number(endHourText);
+      const endMinute = Number(endMinuteText ?? 0);
+      let startMinutes = startHour * 60;
+      startMinutes += startMinute;
+      let endMinutes = endHour * 60;
+      endMinutes += endMinute;
+      if (
+        startHour > 23 ||
+        endHour > 24 ||
+        startMinute > 59 ||
+        endMinute > 59 ||
+        (endHour === 24 && endMinute !== 0) ||
+        startMinutes === endMinutes
+      ) {
+        return null;
+      }
+      const due = new Date(now);
+      due.setHours(startHour, startMinute, 0, 0);
+      if (due.getTime() <= now.getTime()) {
+        due.setDate(due.getDate() + 1);
+      }
+      // Wall-clock duration, like an explicit estimate, even across DST changes.
+      const minutesPerDay = 24 * 60;
+      const durationMinutes =
+        endMinutes > startMinutes
+          ? endMinutes - startMinutes
+          : minutesPerDay - startMinutes + endMinutes;
+      return {
+        changes: {
+          dueWithTime: due.getTime(),
+          dueDay: null,
+          timeEstimate: durationMinutes * 60 * 1000,
+        },
+        ranges: consume(clockRange[0]),
+      };
+    }
+
+    const dateParser = await loadCustomDateParser();
+    const parsedDateArr = dateParser.parse(rr[0], now, {
+      forwardDate: true,
+    });
 
     if (parsedDateArr.length) {
       const parsedDateResult = parsedDateArr[0];
