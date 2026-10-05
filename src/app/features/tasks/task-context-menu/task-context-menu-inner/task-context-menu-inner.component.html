@@ -93,6 +93,21 @@
     }
   </div>
 
+  @if (isTimeTrackingEnabled() && !task.subTaskIds.length) {
+    <button
+      (click)="log25Minutes()"
+      mat-menu-item
+    >
+      <span class="menuItemLeft">
+        <!-- Menu icon styles live in styles/components/_overwrite-material.scss. -->
+        <mat-icon
+          class="log-25-minutes-icon"
+          aria-hidden="true"
+        ></mat-icon>
+        {{ T.F.TASK.CMP.LOG_25_MINUTES | translate }}
+      </span>
+    </button>
+  }
   @if (isTouchActive() && isInTaskRow) {
     <button
       (click)="enterSelectionMode()"

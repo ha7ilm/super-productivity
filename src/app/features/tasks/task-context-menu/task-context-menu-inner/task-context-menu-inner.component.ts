@@ -517,6 +517,10 @@ export class TaskContextMenuInnerComponent implements AfterViewInit, OnDestroy {
     this._taskService.pauseCurrent();
   }
 
+  log25Minutes(): void {
+    this._taskService.addTimeSpentAndSync(this.task, 25 * 60 * 1000);
+  }
+
   estimateTime(): void {
     this._matDialog
       .open(DialogTimeEstimateComponent, {

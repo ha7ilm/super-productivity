@@ -1859,6 +1859,7 @@
         "EDIT_SCHEDULED": "Reschedule",
         "ESTIMATE": "Estimate",
         "FOCUS_SESSION": "Start focus session",
+        "LOG_25_MINUTES": "Log 25 minutes",
         "MARK_DONE": "Mark as completed",
         "MARK_UNDONE": "Mark as not completed",
         "MOVE_TO_BACKLOG": "Move to backlog",

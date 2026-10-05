@@ -1,5 +1,6 @@
 import { test, expect } from '../../fixtures/test.fixture';
 import { PlannerPage } from '../../pages/planner.page';
+import { waitForMenuSettled, waitForStatePersistence } from '../../utils/waits';
 
 test.describe('Planner Time Estimates', () => {
   let plannerPage: PlannerPage;
@@ -7,6 +8,48 @@ test.describe('Planner Time Estimates', () => {
   test.beforeEach(async ({ page, workViewPage }) => {
     plannerPage = new PlannerPage(page);
     await workViewPage.waitForTaskList();
+  });
+
+  test('logs 25-minute increments and preserves Planner progress after reload', async ({
+    page,
+    workViewPage,
+    testPrefix,
+  }) => {
+    const title = `${testPrefix}-Estimated task`;
+    await workViewPage.addTask(`${title} t100m`, false, title);
+    await plannerPage.navigateToPlanner();
+    const card = page.locator('planner-task').filter({ hasText: title });
+    const progress = card.getByRole('progressbar');
+    await expect(card).toBeVisible();
+    await expect(progress).toHaveCount(0);
+
+    for (const percentage of [25, 50]) {
+      await card.click({ button: 'right' });
+      await waitForMenuSettled(page);
+      const menuItems = page
+        .getByRole('menuitem')
+        .filter({ has: page.locator('span.menuItemLeft') });
+      await expect(menuItems.nth(0)).toContainText('Log 25 minutes');
+      await expect(menuItems.nth(1)).toContainText('Start tracking time');
+      await page.getByRole('menuitem', { name: 'Log 25 minutes', exact: true }).click();
+
+      await expect(progress).toHaveAttribute('aria-valuenow', String(percentage));
+      await expect(card.locator('.time-progress-fill')).toHaveCSS('height', '2px');
+      await expect(card).not.toHaveClass(/isCurrent/);
+    }
+
+    await waitForStatePersistence(page);
+    await page.reload();
+    await expect(progress).toHaveAttribute('aria-valuenow', '50');
+
+    // The shared menu also makes the same action available in the normal task list.
+    await page.goto('/#/tag/TODAY/tasks');
+    await workViewPage.waitForTaskList();
+    await page.locator('task').filter({ hasText: title }).click({ button: 'right' });
+    await waitForMenuSettled(page);
+    await page.getByRole('menuitem', { name: 'Log 25 minutes', exact: true }).click();
+    await plannerPage.navigateToPlanner();
+    await expect(progress).toHaveAttribute('aria-valuenow', '75');
   });
 
   test('should handle tasks with time estimate syntax', async ({

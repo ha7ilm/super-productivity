@@ -57,6 +57,7 @@ describe('TaskContextMenuInnerComponent', () => {
   let store: MockStore;
   let isTaskContextMenuOpen: ReturnType<typeof signal<boolean>>;
   let closeActiveTaskContextMenu: ReturnType<typeof signal<(() => void) | null>>;
+  let isTimeTrackingEnabled: ReturnType<typeof signal<boolean>>;
 
   beforeEach(async () => {
     taskService = jasmine.createSpyObj('TaskService', [
@@ -67,6 +68,7 @@ describe('TaskContextMenuInnerComponent', () => {
       'remove',
       'getTasksWithSubTasksByRepeatCfgId$',
       'getArchiveTasksForRepeatCfgId',
+      'addTimeSpentAndSync',
     ]);
     taskService.currentTaskId.and.returnValue('some-id');
     taskDuplicateService = jasmine.createSpyObj<TaskDuplicateService>(
@@ -79,6 +81,7 @@ describe('TaskContextMenuInnerComponent', () => {
     );
     isTaskContextMenuOpen = signal(false);
     closeActiveTaskContextMenu = signal<(() => void) | null>(null);
+    isTimeTrackingEnabled = signal(true);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -120,7 +123,7 @@ describe('TaskContextMenuInnerComponent', () => {
         {
           provide: GlobalConfigService,
           useValue: {
-            appFeatures: () => ({}),
+            appFeatures: () => ({ isTimeTrackingEnabled: isTimeTrackingEnabled() }),
             cfg: () => ({ reminder: {}, tasks: {} }),
           },
         },
@@ -161,6 +164,64 @@ describe('TaskContextMenuInnerComponent', () => {
   afterEach(() => {
     selectTaskByIdWithSubTaskData.release();
     store.resetSelectors();
+  });
+
+  describe('Log 25 minutes', () => {
+    const openMenu = (): void => {
+      fixture.detectChanges();
+      component.contextMenuTrigger()!.openMenu();
+      fixture.detectChanges();
+      tick();
+    };
+    const findLogButton = (): HTMLButtonElement | undefined =>
+      Array.from(
+        document.querySelectorAll<HTMLButtonElement>(
+          '.cdk-overlay-container button[mat-menu-item]',
+        ),
+      ).find((button) => button.textContent?.includes(T.F.TASK.CMP.LOG_25_MINUTES));
+
+    it('appears above Start tracking time and adds exactly 25 minutes per click', fakeAsync(() => {
+      openMenu();
+      const button = findLogButton()!;
+
+      expect(button).toBeDefined();
+      expect(button.nextElementSibling?.textContent).toContain(T.F.TASK.CMP.TRACK_TIME);
+
+      button.click();
+      fixture.detectChanges();
+      tick();
+
+      expect(taskService.addTimeSpentAndSync).toHaveBeenCalledOnceWith(
+        component.task,
+        25 * 60 * 1000,
+      );
+      expect(component.contextMenuTrigger()!.menuOpen).toBeFalse();
+      flush();
+    }));
+
+    it('is available for completed tasks and subtasks', fakeAsync(() => {
+      component.taskSet = { ...component.task, isDone: true, parentId: 'parent' };
+      openMenu();
+
+      expect(findLogButton()).toBeDefined();
+      flush();
+    }));
+
+    it('is hidden for parents whose logged time comes from subtasks', fakeAsync(() => {
+      component.taskSet = { ...component.task, subTaskIds: ['subtask'] };
+      openMenu();
+
+      expect(findLogButton()).toBeUndefined();
+      flush();
+    }));
+
+    it('is hidden when time tracking is disabled', fakeAsync(() => {
+      isTimeTrackingEnabled.set(false);
+      openMenu();
+
+      expect(findLogButton()).toBeUndefined();
+      flush();
+    }));
   });
 
   describe('enterSelectionMode()', () => {

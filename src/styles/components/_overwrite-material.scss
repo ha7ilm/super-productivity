@@ -92,6 +92,13 @@ body.isNativeMobile .mat-mdc-menu-panel {
   ) !important;
 }
 
+// Use the standard mat-icon box and menu spacing; tint the generated icon with
+// the same foreground color as neighboring icons in both light and dark themes.
+.log-25-minutes-icon {
+  background-color: currentColor;
+  mask: url('../../assets/icons/log-25-minutes.png') center / contain no-repeat;
+}
+
 // DIALOGS
 // ----------
 .mat-mdc-dialog-title.mat-mdc-dialog-title,

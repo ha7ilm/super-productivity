@@ -244,6 +244,19 @@ export class PlannerTaskComponent implements OnInit, OnDestroy, AfterViewInit {
         : 0;
   });
 
+  readonly timeProgress = computed<number>(() => {
+    const task = this.task();
+    // Parent estimates already contain the remaining time of their subtasks.
+    const estimate = task.subTaskIds?.length
+      ? task.timeSpent + task.timeEstimate
+      : task.timeEstimate;
+    return this._configService.appFeatures().isTimeTrackingEnabled &&
+      task.timeSpent > 0 &&
+      estimate > 0
+      ? Math.min(100, (task.timeSpent / estimate) * 100)
+      : 0;
+  });
+
   ngOnInit(): void {
     const parentId = this.task().parentId;
     if (parentId) {

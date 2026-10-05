@@ -73,6 +73,21 @@
       </div>
     </div>
   </div>
+  @if (timeProgress(); as progress) {
+    <div
+      class="time-progress"
+      role="progressbar"
+      [attr.aria-label]="T.PDS.TIME_SPENT_AND_ESTIMATE_LABEL | translate"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      [attr.aria-valuenow]="progress"
+    >
+      <div
+        class="time-progress-fill"
+        [style.width.%]="progress"
+      ></div>
+    </div>
+  }
 </swipe-block>
 
 <ng-content select="[task-card-trailing]"></ng-content>

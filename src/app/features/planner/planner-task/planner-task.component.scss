@@ -89,6 +89,20 @@ swipe-block {
   min-width: 0;
 }
 
+.time-progress {
+  height: var(--s-quarter);
+  margin: 0 var(--s-half) var(--s-half);
+  border-radius: var(--card-border-radius);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.time-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-success);
+}
+
 done-toggle {
   --done-toggle-size: 30px;
 

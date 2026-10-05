@@ -43,6 +43,7 @@ describe('PlannerTaskComponent', () => {
   let config: typeof DEFAULT_GLOBAL_CONFIG;
   let logicalToday: Date;
   let firstDayOfWeek: number;
+  let isTimeTrackingEnabled: WritableSignal<boolean>;
   let multiSelectMock: {
     selectedIds: WritableSignal<Set<string>>;
     isActive: WritableSignal<boolean>;
@@ -90,6 +91,7 @@ describe('PlannerTaskComponent', () => {
     config = DEFAULT_GLOBAL_CONFIG;
     logicalToday = new Date(2026, 8, 12);
     firstDayOfWeek = 1;
+    isTimeTrackingEnabled = signal(true);
     storeMock = jasmine.createSpyObj('Store', ['dispatch']);
     matDialogMock = jasmine.createSpyObj('MatDialog', ['open']);
     multiSelectMock = {
@@ -113,7 +115,7 @@ describe('PlannerTaskComponent', () => {
           provide: GlobalConfigService,
           useValue: {
             cfg: () => config,
-            appFeatures: () => ({ isTimeTrackingEnabled: true }),
+            appFeatures: () => ({ isTimeTrackingEnabled: isTimeTrackingEnabled() }),
           },
         },
         { provide: MatDialog, useValue: matDialogMock },
@@ -148,6 +150,71 @@ describe('PlannerTaskComponent', () => {
         imports: [DoneToggleComponent, MsToStringPipe, RenderLinksPipe, TranslatePipe],
         schemas: [NO_ERRORS_SCHEMA],
       },
+    });
+  });
+
+  describe('logged time progress', () => {
+    for (const times of [
+      { timeSpent: 0, timeEstimate: 100 },
+      { timeSpent: 25, timeEstimate: 0 },
+    ]) {
+      it(`hides progress with ${times.timeSpent} logged and an estimate of ${times.timeEstimate}`, () => {
+        const { fixture } = create(makeTask(times));
+
+        expect(fixture.nativeElement.querySelector('[role="progressbar"]')).toBeNull();
+      });
+    }
+
+    it('shows logged time as a fraction of the full estimate and updates with the task', () => {
+      const { fixture } = create(makeTask({ timeSpent: 25, timeEstimate: 100 }));
+      const bar: HTMLElement =
+        fixture.nativeElement.querySelector('[role="progressbar"]');
+      const fill: HTMLElement = bar.querySelector('.time-progress-fill')!;
+
+      expect(bar.getAttribute('aria-valuenow')).toBe('25');
+      expect(fill.style.width).toBe('25%');
+
+      fixture.componentRef.setInput(
+        'task',
+        makeTask({ timeSpent: 50, timeEstimate: 100 }),
+      );
+      fixture.detectChanges();
+
+      expect(bar.getAttribute('aria-valuenow')).toBe('50');
+      expect(fill.style.width).toBe('50%');
+    });
+
+    it('shows progress even below one percent', () => {
+      const { fixture } = create(makeTask({ timeSpent: 1, timeEstimate: 1000 }));
+      const bar: HTMLElement =
+        fixture.nativeElement.querySelector('[role="progressbar"]');
+
+      expect(bar.getAttribute('aria-valuenow')).toBe('0.1');
+    });
+
+    it('caps progress at the full width when logged time exceeds the estimate', () => {
+      const { fixture } = create(makeTask({ timeSpent: 150, timeEstimate: 100 }));
+      const fill: HTMLElement =
+        fixture.nativeElement.querySelector('.time-progress-fill');
+
+      expect(fill.style.width).toBe('100%');
+    });
+
+    it('accounts for parent estimates already containing only remaining subtask time', () => {
+      const { component } = create(
+        makeTask({ timeSpent: 25, timeEstimate: 75, subTaskIds: ['subtask'] }),
+      );
+
+      expect(component.timeProgress()).toBe(25);
+    });
+
+    it('hides progress when time tracking is disabled', () => {
+      const { fixture } = create(makeTask({ timeSpent: 25, timeEstimate: 100 }));
+
+      isTimeTrackingEnabled.set(false);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[role="progressbar"]')).toBeNull();
     });
   });
 
