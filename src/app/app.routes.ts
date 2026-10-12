@@ -59,6 +59,15 @@ export const APP_ROUTES: Routes = [
     canActivate: [FocusOverlayOpenGuard],
   },
   {
+    path: 'planner/history',
+    loadComponent: () =>
+      import('./features/planner/planner-history/planner-history.component').then(
+        (m) => m.PlannerHistoryComponent,
+      ),
+    data: { page: 'planner-history' },
+    canActivate: [FocusOverlayOpenGuard],
+  },
+  {
     path: 'planner',
     loadComponent: () => import('./routes/pages.routes').then((m) => m.PlannerComponent),
     data: { page: 'planner' },

@@ -124,6 +124,7 @@ describe('PageTitleComponent', () => {
     const cases: Array<[string, string]> = [
       ['/schedule', T.MH.SCHEDULE],
       ['/planner', T.MH.PLANNER],
+      ['/planner/history?week=2026-05-04', T.F.PLANNER.HISTORY.TITLE],
       ['/boards', T.MH.BOARDS],
       ['/habits', T.MH.HABITS],
       ['/search', T.MH.SEARCH],
@@ -361,6 +362,16 @@ describe('PageTitleComponent', () => {
     it('renders no actions at the smallest breakpoint', async () => {
       isXxxs$.next({ matches: true });
       expect(buttons(await renderAt('/active/tasks')).length).toBe(0);
+    });
+
+    it('renders no actions on Planner, including at the smallest breakpoint', async () => {
+      expect(buttons(await renderAt('/planner')).length).toBe(0);
+      isXxxs$.next({ matches: true });
+      expect(buttons(await renderAt('/planner')).length).toBe(0);
+    });
+
+    it('does not expose the work-context menu on Planner History', async () => {
+      expect(buttons(await renderAt('/planner/history?week=2026-05-04')).length).toBe(0);
     });
   });
 

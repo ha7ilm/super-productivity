@@ -369,6 +369,7 @@ export class PageTitleComponent {
   private static readonly _ROUTE_TITLE_KEYS: ReadonlyArray<readonly [RegExp, string]> = [
     [/schedule$/, T.MH.SCHEDULE],
     [/planner$/, T.MH.PLANNER],
+    [/planner\/history$/, T.F.PLANNER.HISTORY.TITLE],
     [/boards$/, T.MH.BOARDS],
     [/habits$/, T.MH.HABITS],
     [/search$/, T.MH.SEARCH],

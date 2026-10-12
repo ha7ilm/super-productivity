@@ -1,0 +1,81 @@
+<div class="history-toolbar">
+  <a
+    mat-button
+    routerLink="/planner"
+  >
+    <mat-icon>arrow_back</mat-icon>
+    {{ T.F.PLANNER.HISTORY.BACK | translate }}
+  </a>
+  <div class="week-controls">
+    <button
+      mat-icon-button
+      [attr.aria-label]="T.F.PLANNER.HISTORY.PREVIOUS_WEEK | translate"
+      [matTooltip]="T.F.PLANNER.HISTORY.PREVIOUS_WEEK | translate"
+      (click)="moveWeek(-1)"
+    >
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+    <date-picker-input
+      [label]="T.F.PLANNER.HISTORY.SELECT_WEEK | translate"
+      [ngModel]="weekStart()"
+      (ngModelChange)="selectDate($event)"
+      [max]="today()"
+    />
+    <button
+      mat-icon-button
+      [disabled]="isCurrentWeek()"
+      [attr.aria-label]="T.F.PLANNER.HISTORY.NEXT_WEEK | translate"
+      [matTooltip]="T.F.PLANNER.HISTORY.NEXT_WEEK | translate"
+      (click)="moveWeek(1)"
+    >
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  </div>
+  <span
+    class="week-range"
+    aria-live="polite"
+  >
+    {{ weekStart() | shortDate2 }} – {{ weekEnd() | shortDate2 }}
+  </span>
+</div>
+<div class="history-content">
+  @let state = loadState();
+  @switch (state.status) {
+    @case ('loading') {
+      <div
+        class="load-state"
+        role="status"
+      >
+        <mat-spinner
+          diameter="40"
+          [attr.aria-label]="T.F.PLANNER.HISTORY.LOADING | translate"
+        />
+      </div>
+    }
+    @case ('error') {
+      <div
+        class="load-state"
+        role="alert"
+      >
+        <p>{{ T.F.PLANNER.HISTORY.LOAD_ERROR | translate }}</p>
+        <button
+          mat-button
+          (click)="retry()"
+        >
+          {{ T.F.PLANNER.HISTORY.RETRY | translate }}
+        </button>
+      </div>
+    }
+    @case ('ready') {
+      <div class="days">
+        @for (day of state.days; track day.dayDate) {
+          <planner-history-day
+            [day]="day"
+            [isToday]="day.dayDate === today()"
+            (taskViewed)="viewTask($event)"
+          />
+        }
+      </div>
+    }
+  }
+</div>

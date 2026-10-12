@@ -103,7 +103,6 @@
   <!-- Container + presentational row unified here -->
   @if (container() === 'route') {
     <a
-      #routeLink
       [routerLink]="navRoute()"
       routerLinkActive="active"
       mat-menu-item
@@ -111,6 +110,7 @@
       [class.expanded]="expanded()"
       [class]="tourClass()"
       (click)="clicked.emit()"
+      (contextmenu)="openFeatureMenu($event)"
     >
       @if (customPluginId(); as pluginId) {
         <plugin-icon
@@ -148,6 +148,7 @@
     @if (featureConfigKey()) {
       <button
         #featureSettingsBtn
+        [matMenuTriggerFor]="featureMenu"
         class="additional-btn"
         mat-icon-button
         [attr.aria-label]="T.G.MORE_ACTIONS | translate"
@@ -155,13 +156,17 @@
         <mat-icon>more_vert</mat-icon>
       </button>
 
-      <context-menu
-        [contextMenu]="featureContextMenu"
-        [rightClickTriggerEl]="routeLink"
-        [leftClickTriggerEl]="featureSettingsBtn"
-      ></context-menu>
-
-      <ng-template #featureContextMenu>
+      <mat-menu #featureMenu="matMenu">
+        @if (navRoute() === '/planner') {
+          <a
+            mat-menu-item
+            routerLink="/planner/history"
+            (click)="clicked.emit()"
+          >
+            <mat-icon>history</mat-icon>
+            <span>{{ T.MH.HISTORY | translate }}</span>
+          </a>
+        }
         <button
           mat-menu-item
           (click)="disableFeature()"
@@ -169,7 +174,7 @@
           <mat-icon>visibility_off</mat-icon>
           <span>{{ T.MH.DISABLE_FEATURE | translate }}</span>
         </button>
-      </ng-template>
+      </mat-menu>
     }
   } @else if (container() === 'href') {
     <a

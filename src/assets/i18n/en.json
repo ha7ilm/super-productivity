@@ -970,6 +970,19 @@
       },
       "DAY_LOAD": "Planned: {{planned}} / Available: {{available}}",
       "EDIT_REPEATED_TASK": "Edit recurring task \"{{taskName}}\"",
+      "HISTORY": {
+        "BACK": "Back to Planner",
+        "COMPLETED_COUNT": "Completed: {{count}}",
+        "LOADING": "Loading completed tasks",
+        "LOAD_ERROR": "Could not load completed tasks. Please try again.",
+        "NEXT_WEEK": "Next week",
+        "NO_COMPLETED_TASKS": "No completed tasks",
+        "PREVIOUS_WEEK": "Previous week",
+        "RETRY": "Try again",
+        "SELECT_WEEK": "Week containing",
+        "TITLE": "Planner History",
+        "TOTAL_TIME": "Total tracked time"
+      },
       "NO_TASKS": "No tasks",
       "PLANNED_LOAD": "Planned: {{planned}}",
       "PLAN_VIEW": {

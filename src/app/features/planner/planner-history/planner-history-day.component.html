@@ -1,0 +1,46 @@
+<header>
+  <div class="day-title">
+    @if (isToday()) {
+      <mat-icon inline="true">wb_sunny</mat-icon>
+    }
+    {{ dayLabel() }}
+    <span class="date">{{ day().dayDate | shortDate2 }}</span>
+  </div>
+  @if (day().tasks.length) {
+    <div class="day-counts">
+      {{ T.F.PLANNER.HISTORY.COMPLETED_COUNT | translate: { count: day().tasks.length } }}
+    </div>
+  }
+</header>
+<div class="history-tasks">
+  @for (task of day().tasks; track task.id) {
+    <button
+      type="button"
+      class="history-task focus-ring"
+      [attr.data-task-id]="task.id"
+      (click)="taskViewed.emit(task)"
+    >
+      <mat-icon
+        class="completed-icon"
+        aria-hidden="true"
+        >check_box</mat-icon
+      >
+      <span class="task-body">
+        <span class="title">{{ task.title }}</span>
+        <tag-list
+          class="planner-tag-list-shared"
+          [isShowProjectTagAlways]="true"
+          [tagsToHide]="[]"
+          [task]="task"
+        />
+      </span>
+      <span
+        class="planner-time-remaining-shared"
+        [matTooltip]="T.F.PLANNER.HISTORY.TOTAL_TIME | translate"
+        >{{ task.timeSpent | msToString }}</span
+      >
+    </button>
+  } @empty {
+    <div class="empty">{{ T.F.PLANNER.HISTORY.NO_COMPLETED_TASKS | translate }}</div>
+  }
+</div>

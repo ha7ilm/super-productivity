@@ -6,6 +6,7 @@ import {
   inject,
   input,
   output,
+  viewChild,
 } from '@angular/core';
 import { RouterLink, RouterModule } from '@angular/router';
 
@@ -27,7 +28,7 @@ import { T } from '../../../t.const';
 import { CdkDragPlaceholder } from '@angular/cdk/drag-drop';
 import { MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
-import { MatMenuItem, MatMenuModule } from '@angular/material/menu';
+import { MatMenuItem, MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { selectAllDoneIds } from '../../../features/tasks/store/task.selectors';
 import { Store } from '@ngrx/store';
@@ -35,6 +36,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { isSingleEmoji } from '../../../util/extract-first-emoji';
 import { MenuTreeKind } from '../../../features/menu-tree/store/menu-tree.model';
 import { PluginIconComponent } from '../../../plugins/ui/plugin-icon/plugin-icon.component';
+import { isTouchActive } from '../../../util/input-intent';
 
 @Component({
   selector: 'nav-item',
@@ -81,6 +83,9 @@ export class NavItemComponent {
     }
   });
   private readonly _store = inject(Store);
+  private readonly _featureMenuTrigger = viewChild('featureSettingsBtn', {
+    read: MatMenuTrigger,
+  });
   private static readonly _registeredIcons = new Set<string>();
 
   mode = input<'work' | 'folder' | 'row'>('work');
@@ -220,6 +225,16 @@ export class NavItemComponent {
     const match = svgUrl.match(/^plugin-(.+)-icon$/);
     return match ? match[1] : null;
   });
+
+  openFeatureMenu(event: MouseEvent): void {
+    const trigger = this._featureMenuTrigger();
+    if (!trigger || isTouchActive()) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    trigger.openMenu();
+  }
 
   disableFeature(): void {
     const key = this.featureConfigKey();

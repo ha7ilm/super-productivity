@@ -1,0 +1,58 @@
+@use '../planner-layout' as planner;
+
+:host {
+  @include planner.day-column;
+}
+
+@include planner.day-header;
+
+.history-task {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--planner-item-height);
+  gap: var(--s-half);
+  padding: var(--s-half);
+  margin-bottom: var(--task-list-row-gap);
+  border: var(--task-border);
+  border-top: var(--task-row-edge);
+  border-radius: var(--task-border-radius);
+  background: var(--task-c-bg);
+  color: var(--text-color);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+
+  &:last-child {
+    border-bottom: var(--task-row-edge);
+  }
+
+  &:hover {
+    background: var(--state-hover);
+  }
+}
+
+.completed-icon {
+  flex-shrink: 0;
+  color: var(--text-color-muted);
+}
+
+.task-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  display: block;
+  font-size: var(--planner-font-size);
+  line-height: var(--line-height-normal);
+  overflow-wrap: anywhere;
+}
+
+.empty {
+  min-height: var(--planner-item-height);
+  padding: var(--s);
+  color: var(--text-color-muted);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}

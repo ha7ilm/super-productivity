@@ -49,6 +49,16 @@ export const DATE_PICKER_MAX_DEFAULT = '2999-12-31';
     TranslatePipe,
   ],
   templateUrl: './date-picker-input.component.html',
+  styles: `
+    :host {
+      display: block;
+      min-width: 0;
+    }
+
+    mat-form-field {
+      width: 100%;
+    }
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {

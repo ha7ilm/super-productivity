@@ -1,0 +1,110 @@
+@use '../../../styles/_globals.scss' as *;
+
+@mixin days {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  box-sizing: border-box;
+  padding: var(--s3);
+  padding-top: 0;
+  gap: var(--s2);
+
+  @include mq(xs) {
+    gap: var(--s3);
+  }
+
+  @include mq(xs, max) {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    padding: var(--s-half) var(--s2) var(--s2);
+  }
+}
+
+@mixin day-column {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-width: 260px;
+  width: 260px;
+  overflow: hidden;
+  padding-inline: var(--s);
+  border-inline-start: 1px solid var(--divider-color);
+  // there needs to be enough space for the fab buttons
+
+  padding-bottom: calc(var(--s8) + var(--s4));
+  margin-bottom: var(--s4);
+
+  @include mq(xs, max) {
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+    padding: 0;
+    margin-bottom: var(--s2);
+    border-inline-start: none;
+  }
+}
+
+@mixin day-header {
+  :host header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--s-half) var(--s);
+    margin-top: var(--s);
+    padding: var(--s) 0 var(--s-half);
+
+    @include mq(xs, max) {
+      margin-top: 0;
+      padding: var(--s) 0 var(--s-half);
+    }
+  }
+
+  .day-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    gap: var(--s-half);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-snug);
+    white-space: nowrap;
+
+    .date {
+      color: var(--text-color-muted);
+      font-size: var(--font-size-sm);
+      font-weight: normal;
+    }
+
+    mat-icon {
+      flex-shrink: 0;
+      width: var(--font-size-lg);
+      height: var(--font-size-lg);
+      font-size: var(--font-size-lg);
+    }
+  }
+
+  .day-counts {
+    display: flex;
+    flex-wrap: wrap;
+    grid-column: 1 / -1;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-color-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-snug);
+
+    mat-icon:last-of-type {
+      margin-left: var(--s);
+      width: var(--font-size-lg);
+      height: var(--font-size-lg);
+      font-size: var(--font-size-lg);
+    }
+
+    .day-load {
+      min-width: 0;
+      text-align: center;
+    }
+  }
+}

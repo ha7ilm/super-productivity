@@ -31,6 +31,8 @@ import { Log } from '../../../core/log';
 
 export interface ViewArchivedTaskData {
   task: Task;
+  subTasks?: Task[];
+  readOnly?: boolean;
 }
 
 @Component({
@@ -76,7 +78,9 @@ export class DialogViewArchivedTaskComponent {
   }
 
   constructor() {
-    if (this.task.subTaskIds?.length) {
+    if (this.data.subTasks) {
+      this.subTasks.set(this.data.subTasks);
+    } else if (this.task.subTaskIds?.length) {
       this._taskArchiveService
         .load()
         .then((archiveState) => {
@@ -127,6 +131,7 @@ export class DialogViewArchivedTaskComponent {
   }
 
   openRepeatCfg(): void {
+    if (this.data.readOnly) return;
     this._matDialog.open(DialogEditTaskRepeatCfgComponent, {
       restoreFocus: true,
       data: {
