@@ -15,7 +15,9 @@ import { millisecondsDiffToRemindOption } from '../../tasks/util/remind-option-t
 import { Store } from '@ngrx/store';
 import { MatDialog } from '@angular/material/dialog';
 import { TaskService } from '../../tasks/task.service';
-import { TaskSharedActions } from '../../../root-store/meta/task-shared.actions';
+import { moveTaskInTodayList } from '../../work-context/store/work-context-meta.actions';
+import { WorkContextType } from '../../work-context/work-context.model';
+import { TODAY_TAG } from '../../tag/tag.const';
 import { DateService } from '../../../core/date/date.service';
 import { DialogScheduleTaskComponent } from '../dialog-schedule-task/dialog-schedule-task.component';
 import { dateStrToUtcDate } from '../../../util/date-str-to-utc-date';
@@ -136,10 +138,17 @@ export class PlannerDayComponent {
     } else if (targetList === 'TODO') {
       if (ev.previousContainer === ev.container) {
         if (this.day.isToday) {
+          // CDK's index is the final position after removing the dragged task.
+          const otherTasks = allItems.filter((item) => item.id !== task.id);
           this._store.dispatch(
-            TaskSharedActions.moveTaskInTodayTagList({
-              toTaskId: allItems[ev.currentIndex].id,
-              fromTaskId: task.id,
+            moveTaskInTodayList({
+              taskId: task.id,
+              afterTaskId: otherTasks[ev.currentIndex - 1]?.id ?? null,
+              workContextId: TODAY_TAG.id,
+              workContextType: WorkContextType.TAG,
+              // One untimed list: reordering must preserve completion status.
+              src: 'UNDONE',
+              target: 'UNDONE',
             }),
           );
         } else {
