@@ -26,7 +26,7 @@ import { DEFAULT_LOCALE } from 'src/app/core/locale.constants';
 import { DateService } from '../../../core/date/date.service';
 import { getDbDateStr } from '../../../util/get-db-date-str';
 import { TaskRepeatCfgService } from '../../task-repeat-cfg/task-repeat-cfg.service';
-import { SS } from '../../../core/persistence/storage-keys.const';
+import { LS, SS } from '../../../core/persistence/storage-keys.const';
 import { BodyClass } from '../../../app.constants';
 import { IosKeyboardService } from '../../../core/theme/ios-keyboard.service';
 import { IS_ANDROID_WEB_VIEW_TOKEN } from '../../../util/is-android-web-view';
@@ -283,6 +283,50 @@ describe('AddTaskBarComponent', () => {
     component = fixture.componentInstance;
   });
 
+  describe('insertion position', () => {
+    let savedPreference: string | null;
+
+    beforeEach(() => {
+      savedPreference = localStorage.getItem(LS.IS_ADD_TO_BOTTOM);
+    });
+
+    afterEach(() => {
+      if (savedPreference === null) {
+        localStorage.removeItem(LS.IS_ADD_TO_BOTTOM);
+      } else {
+        localStorage.setItem(LS.IS_ADD_TO_BOTTOM, savedPreference);
+      }
+    });
+
+    it('appends new untimed tasks from the planner without changing the global preference', async () => {
+      localStorage.setItem(LS.IS_ADD_TO_BOTTOM, 'false');
+      fixture.componentRef.setInput('planForDay', '2026-10-15');
+      fixture.detectChanges();
+      component.stateService.updateInputTxt('Planner task');
+      component.stateService.updateCleanText('Planner task');
+
+      await component.addTask();
+
+      expect(mockTaskService.add).toHaveBeenCalledWith(
+        'Planner task',
+        false,
+        jasmine.objectContaining({ dueDay: '2026-10-15' }),
+        true,
+      );
+      expect(localStorage.getItem(LS.IS_ADD_TO_BOTTOM)).toBe('false');
+    });
+
+    for (const preference of [false, true]) {
+      it(`preserves the global insertion preference (${preference}) outside the planner`, () => {
+        localStorage.setItem(LS.IS_ADD_TO_BOTTOM, JSON.stringify(preference));
+        fixture.destroy();
+        fixture = TestBed.createComponent(AddTaskBarComponent);
+
+        expect(fixture.componentInstance.isAddToBottom()).toBe(preference);
+      });
+    }
+  });
+
   describe('highlightSegments', () => {
     it('splits the input by the ranges parsed from that exact text', () => {
       component.stateService.updateInputTxt('Buy milk #shop');
@@ -461,10 +505,7 @@ describe('AddTaskBarComponent', () => {
     });
 
     it('plans existing tasks for the provided planner day instead of moving them to today', async () => {
-      // Set component input using fixture.componentRef.setInput for planForDay
       fixture.componentRef.setInput('planForDay', '2024-05-20');
-      // Set local signal directly for isAddToBottom
-      component.isAddToBottom.set(true);
       fixture.detectChanges();
 
       const task: TaskCopy = {

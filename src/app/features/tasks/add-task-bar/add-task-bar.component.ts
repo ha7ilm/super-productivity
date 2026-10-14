@@ -9,6 +9,7 @@ import {
   HostListener,
   inject,
   input,
+  linkedSignal,
   OnDestroy,
   OnInit,
   output,
@@ -173,8 +174,11 @@ export class AddTaskBarComponent implements AfterViewInit, OnInit, OnDestroy {
   done = output<void>();
 
   // Local UI state
-  isAddToBottom = signal(
-    JSON.parse(localStorage.getItem(LS.IS_ADD_TO_BOTTOM) || 'false'),
+  // The planner's inline bar sits below the day's tasks, so append by default.
+  isAddToBottom = linkedSignal<boolean>(() =>
+    this.planForDay()
+      ? true
+      : JSON.parse(localStorage.getItem(LS.IS_ADD_TO_BOTTOM) || 'false'),
   );
   isAddToBacklog = signal(false);
   isSearchMode = signal(false);
